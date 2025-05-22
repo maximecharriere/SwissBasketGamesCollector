@@ -1,0 +1,33 @@
+name: Update Garmin Exercises Database
+
+on:
+  schedule:
+    # Run every week on Monday at 03:00 UTC
+    - cron: '0 3 * * 1'
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  update-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Set up Google credentials and settings
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT }}' > credentials.json
+          echo '${{ secrets.SETTINGS }}' > settings.json
+          
+      - name: Run update script
+        run: python garmin_exercises_collector.py
+
