@@ -26,25 +26,33 @@ logging.basicConfig(
 )
 logger = logging.getLogger("SwissBasketGamesCollector")
 
-def load_settings(settings_path='settings.json'):
-    """Load settings from settings.json file."""
-    try:
-        with open(settings_path, 'r') as f:
-            settings = json.load(f)
-        return settings
-    except Exception as e:
-        logger.error(f"Error loading settings: {str(e)}")
-        raise
+class Settings:
+    def __init__(self, settings_path='settings.json'):
+        self.settings_path = settings_path
+        self._data = self.load_settings()
 
-def save_settings(settings, settings_path='settings.json'):
-    """Save settings to settings.json file."""
-    try:
-        with open(settings_path, 'w') as f:
-            json.dump(settings, f, indent=2)
-        logger.info("Settings saved successfully")
-    except Exception as e:
-        logger.error(f"Error saving settings: {str(e)}")
-        raise
+    def load_settings(self):
+        """Load settings from settings.json file."""
+        try:
+            with open(self.settings_path, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Error loading settings: {str(e)}")
+            raise
+
+    def save_settings(self):
+        """Save settings to settings.json file."""
+        try:
+            with open(self.settings_path, 'w') as f:
+                json.dump(self._data, f, indent=2)
+            logger.info("Settings saved successfully")
+        except Exception as e:
+            logger.error(f"Error saving settings: {str(e)}")
+            raise
+        
+    def get(self, key, default=None):
+        """Get a top-level setting with a default value."""
+        return self._data.get(key, default)
 
 def download_team_games(team_id):
     """Download the Excel data for a team directly using the team ID"""
@@ -72,11 +80,10 @@ def get_google_services(credentials_path='credentials.json'):
         logger.error(f"Error authenticating with Google: {str(e)}")
         raise
 
-def get_spreadsheet_id(drive_service, sheets_service, settings_path='settings.json'):
+def get_spreadsheet_id(drive_service, sheets_service, settings : Settings):
     """Get spreadsheet ID from settings, verify it exists, or create a new one"""
     try:
         # Load settings
-        settings = load_settings(settings_path)
         spreadsheet_id = settings.get('googleSheets', {}).get('spreadsheetId', '')
         spreadsheet_name = settings.get('googleSheets', {}).get('spreadsheetName', 'BasketPlan Games')
         
@@ -105,10 +112,10 @@ def get_spreadsheet_id(drive_service, sheets_service, settings_path='settings.js
             
             # Update settings with the found ID and name
             if not settings.get('googleSheets'):
-                settings['googleSheets'] = {}
-            settings['googleSheets']['spreadsheetId'] = spreadsheet_id
-            settings['googleSheets']['spreadsheetName'] = spreadsheet_name
-            save_settings(settings, settings_path)
+                settings._data['googleSheets'] = {}
+            settings._data['googleSheets']['spreadsheetId'] = spreadsheet_id
+            settings._data['googleSheets']['spreadsheetName'] = spreadsheet_name
+            settings.save_settings()
             
             return spreadsheet_id
         
@@ -125,10 +132,10 @@ def get_spreadsheet_id(drive_service, sheets_service, settings_path='settings.js
         
         # Update settings with the new ID and name
         if not settings.get('googleSheets'):
-            settings['googleSheets'] = {}
-        settings['googleSheets']['spreadsheetId'] = spreadsheet_id
-        settings['googleSheets']['spreadsheetName'] = spreadsheet_name
-        save_settings(settings, settings_path)
+            settings._data['googleSheets'] = {}
+        settings._data['googleSheets']['spreadsheetId'] = spreadsheet_id
+        settings._data['googleSheets']['spreadsheetName'] = spreadsheet_name
+        settings.save_settings()
         
         return spreadsheet_id
     except Exception as e:
@@ -250,7 +257,7 @@ def update_sheet(sheets_service, spreadsheet_id, sheet_name, df):
 def main():
     try:
         # Load settings
-        settings = load_settings()
+        settings = Settings()
         
         # Load team data from settings
         teams = settings.get('teams', {})
@@ -262,7 +269,7 @@ def main():
         sheets_service, drive_service = get_google_services()
         
         # Get or create spreadsheet using settings
-        spreadsheet_id = get_spreadsheet_id(drive_service, sheets_service)
+        spreadsheet_id = get_spreadsheet_id(drive_service, sheets_service, settings)
         
         # Share spreadsheet with users from settings
         users = settings.get('googleSheets', {}).get('writePrivilege', [])
