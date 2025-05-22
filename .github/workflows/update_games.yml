@@ -1,4 +1,4 @@
-name: Update Garmin Exercises Database
+name: Update Games Spreadsheet
 
 on:
   schedule:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # Allow manual triggers
 
 jobs:
-  update-database:
+  update-spreadsheet:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -29,5 +29,5 @@ jobs:
           echo '${{ secrets.SETTINGS }}' > settings.json
           
       - name: Run update script
-        run: python garmin_exercises_collector.py
+        run: python SwissBasketGamesCollector.py
 
