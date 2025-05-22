@@ -71,6 +71,28 @@ Notes:
 
 Run the script:
 
-```python
+```sh
 python SwissBasketGamesCollector.py
 ```
+
+## How It Works
+
+The script performs the following operations:
+
+1. **Load Configuration**: Reads team IDs and Google Sheets settings from `settings.json`
+
+2. **Google Authentication**: Connects to Google Sheets and Drive APIs using service account credentials
+
+3. **Spreadsheet Management**: Uses existing spreadsheet of create a new one if none exists
+
+4. **Permission Management**: Shares the spreadsheet with users specified in settings
+
+5. **Data Collection**: For each team configured in settings:
+   - Downloads game data from basketplan.ch using the team ID
+   - Adds team name and calculates week numbers
+   - Updates the team's dedicated sheet in the spreadsheet
+
+6. **Data Consolidation**: Creates/updates an "All" sheet with games from all teams sorted by date
+
+7. **Logging**: Records all operations to both console and log file in the `logs` directory
+
